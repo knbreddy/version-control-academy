@@ -87,11 +87,11 @@ function create(input){
  }
  function command(line){
   const raw=String(line||"").trim(),cmd=raw.replace(/\s+/g," ");if(!cmd)return result(false,"Enter a command.");
-  if(cmd==="help")return result(true,"Commands: git status, git diff, git diff --cached, git branch, git log --oneline, git switch, git add, git commit -m, git push -u origin, git fetch origin, git pull --ff-only, gh pr create, gh pr review --approve, gh pr merge, git remote -v");
+  if(cmd==="help")return result(true,"Commands: git status, git diff, git diff --cached, git branch, git log --oneline, git switch, git add, git commit -m, git push -u origin, git fetch origin, git merge origin/main, git merge --abort, git pull --ff-only, gh pr create, gh pr review --approve, gh pr merge, git remote -v");
   if(cmd==="git status"){
     const unstage=Object.keys(state.working).filter(k=>state.working[k]!==((Object.prototype.hasOwnProperty.call(state.stage,k))?state.stage[k]:tracked()[k]));
     const stage=Object.keys(state.stage);
-    return result(true,"On branch "+state.head+"\n"+(stage.length?"Changes to be committed: "+stage.join(", ")+"\n":"")+(unstage.length?"Unstaged changes: "+unstage.join(", ")+"\n":"")+(stage.length||unstage.length?"":"nothing to commit, working tree clean"));
+    return result(true,"On branch "+state.head+"\n"+(state.merge?"Unmerged paths: resolve conflict markers, stage the resolution and commit.\n":"")+(stage.length?"Changes to be committed: "+stage.join(", ")+"\n":"")+(unstage.length?"Unstaged changes: "+unstage.join(", ")+"\n":"")+(stage.length||unstage.length?"":"nothing to commit, working tree clean"));
   }
   if(cmd==="git branch")return result(true,Object.keys(state.branches).map(b=>(b===state.head?"* ":"  ")+b+" → "+state.branches[b]).join("\n"));
   if(cmd==="git remote -v")return result(true,"origin  https://github.com/example/hello-app.git (simulated fetch/push)");
@@ -111,13 +111,31 @@ function create(input){
    if(!clean())return result(false,"Your working directory is dirty. Commit changes before switching branches.");
    state.head=m[1];state.working=tracked();return result(true,"Switched to branch '"+state.head+"'.");
   }
-  if(cmd==="git add ."||cmd==="git add -A"){for(const [n,c] of Object.entries(state.working))state.stage[n]=c;return result(true,"Staged all working files. Inspect git diff --cached before committing.")}
-  m=cmd.match(/^git add (app\.js|README\.md)$/);
-  if(m){state.stage[m[1]]=state.working[m[1]];return result(true,"Staged "+m[1]+".")}
-  m=raw.match(/^git commit -m\s+["']([^"']+)["']$/);
-  if(m){if(!Object.keys(state.stage).length)return result(false,"Nothing staged. Run git add first.");
-   const files={...tracked(),...state.stage};if(same(files,tracked()))return result(false,"Staged content is identical to the current commit.");
-   const id=freshCommit(files,m[1],[active()]);state.branches[state.head]=id;state.stage={};return result(true,"["+state.head+" "+id+"] "+m[1]+". Commit saved locally, not yet on GitHub.");
+  if(cmd==="git add ."||cmd==="git add -A"){
+   if(state.merge&&Object.values(state.working).some(v=>/^(<<<<<<<|=======|>>>>>>>)/m.test(v)))return result(false,"Remove conflict markers before staging.");
+   for(const [n,c] of Object.entries(state.working))state.stage[n]=c;
+   return result(true,"Staged working files.");
+  }
+  m=cmd.match(/^git add (app\\.js|README\\.md)$/);
+  if(m){
+   if(state.merge&&/^(<<<<<<<|=======|>>>>>>>)/m.test(state.working[m[1]]||""))return result(false,"Remove conflict markers before staging the resolution.");
+   state.stage[m[1]]=state.working[m[1]];
+   return result(true,"Staged "+m[1]+(state.merge?" as the merge resolution.":"."));
+  }
+  m=raw.match(/^git commit -m\\s+["']([^"']+)["']$/);
+  if(m){
+   if(!Object.keys(state.stage).length)return result(false,"Nothing staged. Run git add first.");
+   const files={...tracked(),...state.stage};
+   if(state.merge){
+    if(state.merge.conflicts.some(n=>!Object.prototype.hasOwnProperty.call(state.stage,n)))return result(false,"Stage each conflicted file before committing the merge.");
+    if(Object.values(files).some(v=>/^(<<<<<<<|=======|>>>>>>>)/m.test(v)))return result(false,"Conflict markers remain in the staged snapshot.");
+    const parents=[state.merge.ours,state.merge.theirs];
+    const id=freshCommit(files,m[1],parents);state.branches[state.head]=id;state.stage={};state.merge=null;
+    return result(true,"["+state.head+" "+id+"] Merge commit saved with two parents: "+parents.join(", ")+". Push to update the PR.");
+   }
+   if(same(files,tracked()))return result(false,"Staged content is identical to current HEAD.");
+   const id=freshCommit(files,m[1],[active()]);state.branches[state.head]=id;state.stage={};
+   return result(true,"["+state.head+" "+id+"] "+m[1]+". Commit saved locally, not on the remote.");
   }
   m=cmd.match(/^git push(?: -u)? origin ([a-zA-Z0-9._\/-]+)$/);
   if(m){const branch=m[1];if(branch!==state.head)return result(false,"Switch to the branch you want to push first.");
@@ -125,6 +143,33 @@ function create(input){
    const remoteTip=state.remote.branches[branch];if(remoteTip&&!ancestor(remoteTip,active()))return result(false,"Push rejected: remote has commits you do not have.");
    state.remote.branches[branch]=active();if(state.pr&&!state.pr.merged&&state.pr.branch===branch)state.pr.approved=false;
    return result(true,"Pushed "+branch+" to origin at "+active()+". GitHub can now compare this branch.");
+  }
+  if(cmd==="git merge --abort"){
+   if(!state.merge)return result(false,"There is no merge in progress.");
+   state.working=filesAt(state.merge.ours);state.stage={};state.merge=null;
+   return result(true,"Merge aborted. Your working tree is restored to the pre-merge commit.");
+  }
+  if(cmd==="git merge origin/main"){
+   if(state.merge)return result(false,"Finish or abort the current merge first.");
+   if(!clean())return result(false,"Commit or discard your local edits before merging.");
+   const ours=active(),theirs=state.remoteTracking.main;
+   if(!theirs)return result(false,"No origin/main ref. Run git fetch origin.");
+   if(ancestor(theirs,ours))return result(true,"Already up to date with origin/main.");
+   if(ancestor(ours,theirs)){state.branches[state.head]=theirs;state.working=filesAt(theirs);return result(true,"Fast-forwarded to origin/main.");}
+   const base=commonAncestor(ours,theirs),a=filesAt(ours),b=filesAt(theirs),original=filesAt(base),files=copy(a),conflicts=[];
+   for(const name of Object.keys({...original,...a,...b})){
+    if(a[name]!==original[name]&&b[name]!==original[name]&&a[name]!==b[name]){
+      conflicts.push(name);
+      files[name]="<<<<<<< HEAD\\n"+(a[name]||"")+"=======\\n"+(b[name]||"")+">>>>>>> origin/main\\n";
+    }else if(b[name]!==original[name]){if(b[name]===undefined)delete files[name];else files[name]=b[name]}
+   }
+   state.working=files;
+   if(conflicts.length){
+     state.merge={ours,theirs,base,conflicts};
+     return result(true,"CONFLICT in "+conflicts.join(", ")+". Edit the file, preserve both approved changes, remove the markers, stage and commit.");
+   }
+   const id=freshCommit(files,"Merge origin/main",[ours,theirs]);state.branches[state.head]=id;state.stage={};
+   return result(true,"Merged origin/main, creating merge commit "+id+".");
   }
   if(cmd==="git fetch origin"){state.remoteTracking=copy(state.remote.branches);return result(true,"Fetched origin: updated remote-tracking refs. Local branch and working files are unchanged.");}
   if(cmd==="git pull --ff-only"){if(!clean())return result(false,"Commit or discard changes before pulling.");
@@ -139,16 +184,27 @@ function create(input){
  }
  function suggested(){
   const p=state.pr,feature=Object.keys(state.branches).find(n=>n!=="main");
-  if(!feature)return {step:0,title:"Create a feature branch",command:"git switch -c feature/welcome",detail:"A branch lets you experiment without changing main."};
-  if(state.working["app.js"]!=='console.log("Hello, Git!");\n'&&!p?.merged&&state.head!== "main")return {step:1,title:"Edit the application",command:null,detail:'Select app.js and change the line to console.log("Hello, Git!");'};
-  if(!p&&!state.pr&&state.head!=="main"&&Object.keys(state.stage).length===0&&state.branches[state.head]===state.branches.main)return {step:2,title:"Stage the edit",command:"git add app.js",detail:"Check the diff and select app.js for the next commit."};
-  if(!p&&state.head!=="main"&&Object.keys(state.stage).length>0)return {step:3,title:"Make a commit",command:'git commit -m "Update greeting"',detail:"Commit saves the staged snapshot locally."};
-  if(!p&&state.head!=="main"&&!state.remote.branches[state.head])return {step:4,title:"Push your branch",command:"git push -u origin "+state.head,detail:"Send your local feature commit to the simulated remote."};
-  if(!p)return {step:5,title:"Open a pull request",command:"gh pr create --fill",detail:"Propose merging the feature branch into main."};
-  if(!p.approved&&!p.merged)return {step:6,title:"Review and approve",command:"gh pr review --approve",detail:"An independent simulated reviewer inspects the diff and required checks."};
-  if(!p.merged)return {step:7,title:"Merge after checks pass",command:"gh pr merge",detail:"Branch protection requires a passing check and approval."};
-  if(state.branches.main!==state.remote.branches.main)return state.head==="main"?{step:8,title:"Fast-forward local main",command:"git pull --ff-only",detail:"Fetch is safe to explore first; pull --ff-only brings the merged commit into your local main."}:{step:8,title:"Switch to main",command:"git switch main",detail:"Switch to local main before pulling the merged changes."};
-  return {step:9,title:"Project completed",command:"git log --oneline",detail:"Your local main now includes the reviewed feature."};
+  if(state.merge){
+    const pending=state.merge.conflicts.filter(n=>!Object.prototype.hasOwnProperty.call(state.stage,n));
+    if(pending.length)return {step:6,title:"Resolve Alice and Bob's conflict",command:null,detail:'Edit app.js to include both console.log("Hello, Git!"); and console.log("Hello from Bob!"); on separate lines. Remove all conflict markers, save, and stage app.js.'};
+    return {step:6,title:"Commit your merge resolution",command:'git commit -m "Resolve Alice and Bob"',detail:"A merge commit records both parents, preserving each developer's contribution."};
+  }
+  if(!feature)return {step:0,title:"Create a feature branch",command:"git switch -c feature/welcome",detail:"A feature branch isolates your change from main."};
+  if(!p&&state.head!=="main"&&state.branches[state.head]===state.branches.main&&state.working["app.js"]!=='console.log("Hello, Git!");\n')return {step:1,title:"Edit the application",command:null,detail:'Edit app.js to console.log("Hello, Git!");'};
+  if(!p&&state.head!=="main"&&Object.keys(state.stage).length===0&&state.branches[state.head]===state.branches.main)return {step:2,title:"Stage your edit",command:"git add app.js",detail:"Stage the desired file before committing."};
+  if(!p&&state.head!=="main"&&Object.keys(state.stage).length>0)return {step:3,title:"Commit locally",command:'git commit -m "Update greeting"',detail:"Commit saves your staged change."};
+  if(!p&&state.head!=="main"&&!state.remote.branches[state.head])return {step:4,title:"Push feature branch",command:"git push -u origin "+state.head,detail:"Publish your feature commit to the simulated GitHub remote."};
+  if(!p)return {step:5,title:"Create a pull request",command:"gh pr create --fill",detail:"Open a proposal to integrate your feature with main."};
+  if(state.collaborator&&!p.merged){
+    if(state.head!==p.branch)return {step:6,title:"Switch back to your feature branch",command:"git switch "+p.branch,detail:"Resolve the competing change on the feature branch."};
+    if(state.remoteTracking.main!==state.remote.branches.main)return {step:6,title:"Fetch Bob's new commit",command:"git fetch origin",detail:"Fetch updates origin/main without altering your local files."};
+    if(!ancestor(state.remote.branches.main,active()))return {step:6,title:"Merge Bob's work",command:"git merge origin/main",detail:"Inspect the conflict markers, then decide how to combine both edits."};
+    if(state.remote.branches[p.branch]!==active())return {step:6,title:"Push your resolution",command:"git push -u origin "+p.branch,detail:"Push the two-parent merge commit so the PR can be rechecked."};
+  }
+  if(!p.approved&&!p.merged)return {step:6,title:"Review and approve",command:"gh pr review --approve",detail:"A separate simulated reviewer verifies your changes and checks."};
+  if(!p.merged)return {step:7,title:"Merge the PR",command:"gh pr merge",detail:"Approval and conflict-free checks are required before merging."};
+  if(state.branches.main!==state.remote.branches.main)return state.head==="main"?{step:8,title:"Update local main",command:"git pull --ff-only",detail:"Pull the reviewed merge into local main."}:{step:8,title:"Return to main",command:"git switch main",detail:"Switch to main before synchronizing."};
+  return {step:9,title:"Completed",command:"git log --oneline",detail:"Your local main includes both contributors."};
  }
  function snapshot(){return copy(state)}
  return {command,edit,snapshot,suggested,changes,checkPR,mergeability,collaboratorPush,initial,commonAncestor};
