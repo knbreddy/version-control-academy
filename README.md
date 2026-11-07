@@ -11,6 +11,7 @@ A no-login, static learning website for **Git → GitHub → GitHub Actions**.
 - 57 review flashcards
 - 27 short quiz questions across 9 modules, with feedback and stored scores
 - A unified persistent Git-to-GitHub workspace with editable files, working tree, staging, commits, branches, simulated remote tracking, a pull request, review gate, CI and merge
+- Optional multi-developer scenario inside the same workspace: Bob pushes a conflicting main-branch commit, learner fetches, merges, resolves conflict markers, can abort and retry, commits a two-parent resolution, pushes, and re-reviews before merging.
 - A beginner Git playground with 8 guided commands
 - A branching and merging simulator with a 19-step walkthrough, including a conflict and two-parent merge
 - 4 interactive engineering missions (12 decisions): selective staging, merge conflicts, PR review, and CI troubleshooting
@@ -33,7 +34,7 @@ Start with the [academy](https://knbreddy.github.io/version-control-academy/).
 
 ## GitHub Pages and testing
 
-GitHub Actions runs `node tests/site.test.cjs` before deploying the public site. The smoke tests validate content mappings, JavaScript syntax, the full first-commit sequence, the two-parent merge scenario, all four missions with retries, every quiz, four broken/fixed GitHub Actions workflow scenarios, and the unified Git-to-PR workflow (including failure paths and local/remote divergence). GitHub Pages deploys from `main`.
+GitHub Actions runs `node tests/site.test.cjs` before deploying the public site. The smoke tests validate content mappings, JavaScript syntax, the full first-commit sequence, the two-parent merge scenario, all four missions with retries, every quiz, four broken/fixed GitHub Actions workflow scenarios, and the unified Git-to-PR workflow (including failure paths and local/remote divergence), and the two-developer conflict/abort/resolution/review sequence. GitHub Pages deploys from `main`.
 
 ## Not yet covered by automated tests
 
