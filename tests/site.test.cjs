@@ -42,12 +42,12 @@ function check() {
   const index = html('index.html');
   const guide = fs.readFileSync('content.js','utf8');
   assert(!/\bCVS\b/i.test(index+guide), 'CVS should not be present');
-  for (const page of ['index.html','playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html']) {
+  for (const page of ['index.html','playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html','workspace.html']) {
     assert(html(page).includes('favicon.svg'), 'Favicon missing on '+page);
     new vm.Script(script(page),{filename:page});
     console.log('✓ Script syntax: '+page);
   }
-  for (const link of ['playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html']) {
+  for (const link of ['playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html','workspace.html']) {
     assert(index.includes(link), 'Missing nav to '+link);
   }
   const dataset = JSON.parse(index.split('const DATA=')[1].split(';\nconst KEY=')[0]);
@@ -121,6 +121,53 @@ function check() {
   assert.equal(bad.evaluation.passed,false);
   assert(bad.simulation.parsed.errors.some(e=>e.includes('unknown needs target')));
   console.log('✓ Actions YAML lab: four failures, four verified fixes, invalid dependency');
+
+
+  const workspaceContext = vm.createContext({});
+  new vm.Script(fs.readFileSync('workspace-engine.js','utf8'),{filename:'workspace-engine.js'}).runInContext(workspaceContext);
+  const workspaceEngine = workspaceContext.GitWorkspaceEngine.create();
+  assert.equal(workspaceEngine.suggested().step,0);
+  assert.equal(workspaceEngine.command('gh pr merge').ok,false);
+  assert.equal(workspaceEngine.command('git switch -c feature/welcome').ok,true);
+  assert.equal(workspaceEngine.suggested().step,1);
+  assert.equal(workspaceEngine.edit('app.js','console.log("Hello, Git!");\n').ok,true);
+  assert.equal(workspaceEngine.suggested().step,2);
+  assert.equal(workspaceEngine.command('git status').ok,true);
+  assert.equal(workspaceEngine.command('git add app.js').ok,true);
+  assert.equal(workspaceEngine.suggested().step,3);
+  assert.equal(workspaceEngine.command('git diff --cached').ok,true);
+  assert.equal(workspaceEngine.command('git commit -m "Update greeting"').ok,true);
+  assert.equal(workspaceEngine.suggested().step,4);
+  assert.equal(workspaceEngine.command('git push -u origin feature/welcome').ok,true);
+  assert.equal(workspaceEngine.suggested().step,5);
+  assert.equal(workspaceEngine.command('gh pr create --fill').ok,true);
+  assert.equal(workspaceEngine.command('gh pr merge').ok,false,'PR must require reviewer approval');
+  assert.equal(workspaceEngine.checkPR().ok,true);
+  assert.equal(workspaceEngine.command('gh pr review --approve').ok,true);
+  assert.equal(workspaceEngine.command('gh pr merge').ok,true);
+  let workspaceState=workspaceEngine.snapshot();
+  assert.equal(workspaceState.pr.merged,true);
+  assert.notEqual(workspaceState.branches.main,workspaceState.remote.branches.main,'Local main should not automatically advance');
+  assert.equal(workspaceState.commits[workspaceState.pr.mergeCommit].parents.length,2);
+  assert.equal(workspaceEngine.command('git switch main').ok,true);
+  assert.equal(workspaceEngine.command('git fetch origin').ok,true);
+  assert.equal(workspaceEngine.command('git pull --ff-only').ok,true);
+  workspaceState=workspaceEngine.snapshot();
+  assert.equal(workspaceState.branches.main,workspaceState.remote.branches.main);
+  assert.equal(workspaceState.working['app.js'],'console.log("Hello, Git!");\n');
+  assert.equal(workspaceEngine.suggested().step,9);
+  assert.equal(workspaceContext.GitWorkspaceEngine.create(workspaceState).snapshot().pr.merged,true);
+  const unchangedCount=Object.keys(workspaceState.commits).length;
+  assert.equal(workspaceEngine.command('git commit -m "Nothing"').ok,false);
+  assert.equal(Object.keys(workspaceEngine.snapshot().commits).length,unchangedCount);
+  const failedCI=workspaceContext.GitWorkspaceEngine.create();
+  assert.equal(failedCI.command('git switch -c feature/broken').ok,true);
+  failedCI.edit('app.js','console.log("Broken");\n');
+  failedCI.command('git add app.js');failedCI.command('git commit -m "Broken greeting"');
+  failedCI.command('git push -u origin feature/broken');failedCI.command('gh pr create --fill');
+  assert.equal(failedCI.checkPR().ok,false);
+  assert.equal(failedCI.command('gh pr review --approve').ok,false);
+  console.log('✓ Unified Git workspace: edit, stage, commit, remote push, PR approval, merge, fetch, pull and failure paths');
 
   console.log('All site checks passed.');
 }
