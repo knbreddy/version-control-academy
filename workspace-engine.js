@@ -6,22 +6,43 @@ function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function initial(){
  const first={id:"c001",parents:[],message:"Initial project",files:copy(DEFAULT_FILES)};
  return {version:1,next:2,commits:{c001:first},branches:{main:"c001"},head:"main",
-  remote:{name:"origin",branches:{main:"c001"}},remoteTracking:{main:"c001"},working:copy(DEFAULT_FILES),stage:{},pr:null,events:[],last:"",author:"Learner"};
+  remote:{name:"origin",branches:{main:"c001"}},remoteTracking:{main:"c001"},working:copy(DEFAULT_FILES),stage:{},pr:null,merge:null,collaborator:null,events:[],last:"",author:"Learner"};
 }
 function create(input){
  let state=input&&input.version===1?copy(input):initial();
+ if(!state.remoteTracking)state.remoteTracking=copy(state.remote.branches);
+ if(!Object.prototype.hasOwnProperty.call(state,"merge"))state.merge=null;
+ if(!Object.prototype.hasOwnProperty.call(state,"collaborator"))state.collaborator=null;
  function commit(id){return state.commits[id]||null}
  function active(){return state.branches[state.head]}
  function filesAt(id){return id&&commit(id)?copy(commit(id).files):{}}
  function tracked(){return filesAt(active())}
  function addEvent(text){state.events.push(text);state.events=state.events.slice(-35);state.last=text}
- function clean(){return same(tracked(),state.working)&&Object.keys(state.stage).length===0}
+ function clean(){return !state.merge&&same(tracked(),state.working)&&Object.keys(state.stage).length===0}
  function result(ok,message){addEvent(message);return {ok,message,state:copy(state)}}
  function commonAncestor(a,b){let seen=new Set(),stack=[a];while(stack.length){let id=stack.pop();if(!id||seen.has(id))continue;seen.add(id);let item=commit(id);if(item)stack.push(...item.parents)}
   let queue=[b],visited=new Set();while(queue.length){let id=queue.shift();if(!id||visited.has(id))continue;if(seen.has(id))return id;visited.add(id);let item=commit(id);if(item)queue.push(...item.parents)}return null}
  function ancestor(a,b){return commonAncestor(a,b)===a}
  function changes(base,tip){const a=filesAt(base),b=filesAt(tip),out=[];for(const name of new Set([...Object.keys(a),...Object.keys(b)])){if(a[name]!==b[name])out.push({name,before:a[name]??null,after:b[name]??null})}return out}
  function freshCommit(files,message,parents){const id="c"+String(state.next++).padStart(3,"0");state.commits[id]={id,files:copy(files),parents:parents.filter(Boolean),message};return id}
+
+ function mergeability(){
+  const p=state.pr;if(!p||p.merged)return {ok:false,reason:"There is no open PR."};
+  const main=state.remote.branches.main,feature=state.remote.branches[p.branch];
+  if(!feature)return {ok:false,reason:"Feature branch has not been pushed."};
+  const base=commonAncestor(main,feature),a=filesAt(main),b=filesAt(feature),original=filesAt(base);
+  const conflicted=Object.keys({...original,...a,...b}).filter(n=>a[n]!==original[n]&&b[n]!==original[n]&&a[n]!==b[n]);
+  return conflicted.length?{ok:false,reason:"Conflict in "+conflicted.join(", ")+". Fetch and merge origin/main into the feature branch before resolving and pushing.",conflicts:conflicted}:{ok:true,reason:"Branches can be merged."};
+ }
+ function collaboratorPush(){
+  const p=state.pr;if(!p||p.merged)return result(false,"Open your feature PR before simulating Bob's concurrent work.");
+  if(state.collaborator)return result(false,"Bob already pushed a competing change in this exercise.");
+  const old=state.remote.branches.main,files=filesAt(old);
+  files["app.js"]='console.log("Hello from Bob!");\n';
+  const id=freshCommit(files,"Bob: change welcome message",[old]);
+  state.remote.branches.main=id;state.collaborator={name:"Bob",commit:id,branch:"main"};p.approved=false;
+  return result(true,"Bob pushed "+id+" to origin/main. He edited the same line independently. Your local branches and origin/main tracking ref have not updated. Fetch to discover his change.");
+ }
  function checkPR(){const p=state.pr;if(!p)return null;const base=state.remote.branches.main,tip=state.remote.branches[p.branch];
   if(!tip)return {ok:false,reason:"The feature branch has not been pushed."};
   const diff=changes(commonAncestor(base,tip),tip),source=filesAt(tip)["app.js"]||"";
@@ -51,6 +72,7 @@ function create(input){
  function mergePR(){
   const p=state.pr;if(!p||p.merged)return result(false,"No open pull request is available.");
   if(!p.approved)return result(false,"Branch protection: an independent reviewer approval is required.");
+  const mergeCheck=mergeability();if(!mergeCheck.ok)return result(false,"Cannot merge PR: "+mergeCheck.reason);
   const check=checkPR();if(!check.ok)return result(false,"Branch protection: "+check.reason);
   const main=state.remote.branches.main,feature=state.remote.branches[p.branch];
   if(!ancestor(commonAncestor(main,feature),main))return result(false,"The base branch history could not be verified.");
@@ -129,7 +151,7 @@ function create(input){
   return {step:9,title:"Project completed",command:"git log --oneline",detail:"Your local main now includes the reviewed feature."};
  }
  function snapshot(){return copy(state)}
- return {command,edit,snapshot,suggested,changes,checkPR,initial,commonAncestor};
+ return {command,edit,snapshot,suggested,changes,checkPR,mergeability,collaboratorPush,initial,commonAncestor};
 }
 root.GitWorkspaceEngine={create,initial};
 })(typeof window!=="undefined"?window:globalThis);
