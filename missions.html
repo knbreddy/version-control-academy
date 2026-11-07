@@ -46,15 +46,15 @@ const $=id=>document.getElementById(id);
 function escapeHtml(str){return String(str).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(complete))}catch{}}
 function switchMission(i){current=i;step=0;selected=null;render()}
-function choose(i){if(selected!==null)return;selected=i;render()}
+function choose(i){if(selected===missions[current].steps[step].correct)return;selected=i;render()}
 function advance(){const m=missions[current];if(selected!==m.steps[step].correct)return;if(step<m.steps.length-1){step++;selected=null;render()}else{complete[m.id]=true;save();selected=null;render()}}
 function resetMission(){step=0;selected=null;render()}
 function render(){const m=missions[current],q=m.steps[step];$("menu").innerHTML=missions.map((x,i)=>'<button type="button" role="tab" aria-selected="'+(current===i)+'" data-mission="'+i+'"><strong>'+(complete[x.id]?'✓ ':'')+escapeHtml(x.name)+'</strong><small>'+escapeHtml(x.description)+'</small></button>').join("");
 $("level").textContent=m.level;$("title").textContent=q.title;$("story").textContent=q.story;$("snippet").textContent=q.code;$("question").textContent=q.q;$("count").textContent="Step "+(step+1)+" / "+m.steps.length;$("bar").style.width=100*(step+(selected===q.correct?1:0))/m.steps.length+"%";
-$("choices").innerHTML=q.options.map((x,i)=>'<button type="button" class="choice" data-choice="'+i+'" '+(selected!==null?'disabled':'')+'>'+String.fromCharCode(65+i)+'. '+escapeHtml(x)+'</button>').join("");
-const box=$("feedback");if(selected===null){box.className="feedback hidden";box.textContent=""}else{box.className="feedback "+(selected===q.correct?"good":"bad");box.innerHTML='<strong>'+(selected===q.correct?"✓ Correct decision":"Not quite—here is why")+'</strong>'+escapeHtml(q.why)}
+$("choices").innerHTML=q.options.map((x,i)=>'<button type="button" class="choice" data-choice="'+i+'" '+(selected===q.correct?'disabled':'')+'>'+String.fromCharCode(65+i)+'. '+escapeHtml(x)+'</button>').join("");
+const box=$("feedback");if(selected===null){box.className="feedback hidden";box.textContent=""}else{box.className="feedback "+(selected===q.correct?"good":"bad");box.innerHTML='<strong>'+(selected===q.correct?"✓ Correct decision":"Not quite — try another option")+'</strong>'+escapeHtml(q.why)}
 $("next").classList.toggle("hidden",selected!==q.correct);$("next").textContent=step===m.steps.length-1?"Complete mission ✓":"Next step →";
-$("hint").classList.toggle("hidden",selected!==null);
+$("hint").classList.toggle("hidden",selected===q.correct);
 if(complete[m.id]&&step===m.steps.length-1&&selected===null){box.className="feedback good";box.textContent="✓ Mission completed. You can restart and practice again."}
 document.querySelectorAll("[data-mission]").forEach(b=>b.onclick=()=>switchMission(Number(b.dataset.mission)));
 document.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>choose(Number(b.dataset.choice)));
