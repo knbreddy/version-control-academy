@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1322"><link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<title>Git Playground | Git Academy</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1322;--card:#132238;--panel:#182b43;--line:#34465e;--fg:#eaf1ff;--muted:#a5b9ce;--mint:#69dfb8;--blue:#91b7ff}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--fg);margin:0;line-height:1.55}button,input,select{font:inherit}button{cursor:pointer}a{color:var(--mint)}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.wrapper{max-width:1200px;margin:auto;padding:25px 22px 70px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:25px}.top a{font-weight:750;text-decoration:none}.tag{display:inline-block;border:1px solid #47637b;border-radius:30px;padding:4px 11px;color:var(--muted);font-size:12px}
+h1{font-size:clamp(30px,5vw,49px);margin:6px 0 10px;line-height:1.15}h2{margin:10px 0 12px;font-size:22px}h3{margin:8px 0;font-size:16px}p{margin:8px 0 12px}.muted{color:var(--muted)}.eyebrow{color:var(--mint);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.layout{display:grid;grid-template-columns:minmax(280px,.83fr) minmax(0,1.3fr);gap:18px;margin-top:28px}.panel{border:1px solid var(--line);background:var(--card);border-radius:17px;padding:23px;min-width:0}
+.step{border:1px solid #344c60;border-radius:12px;padding:16px;margin:12px 0;background:#15273d}.step.current{border-color:var(--mint);background:#153c40}.step.done{opacity:.8}
+button.primary{background:var(--mint);border:0;color:#06261d;font-weight:800;border-radius:9px;padding:11px 15px}button.secondary{background:#293c52;color:var(--fg);border:1px solid #56687f;border-radius:9px;padding:9px 13px}button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.terminal{background:#060e19;border:1px solid #3c526a;border-radius:13px;overflow:hidden;margin:17px 0}.termHead{background:#213149;padding:10px 15px;color:#adc1d2;font-size:13px}.screen{font:14px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;padding:16px;min-height:230px;max-height:410px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}.prompt{display:flex;align-items:center;border-top:1px solid #354557;padding:12px 15px;gap:9px;color:var(--mint);font:14px ui-monospace,Consolas,monospace}.prompt input{min-width:0;flex:1;border:0;background:transparent;color:var(--fg);outline:0;font:inherit}
+.cmd{font-family:ui-monospace,Consolas,monospace;background:#091a2b;padding:10px 12px;border-radius:8px;overflow-wrap:anywhere;color:#c7e2fc}
+.files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.file{padding:15px;background:#10233a;border:1px solid #334b62;border-radius:10px;min-height:118px}.file strong{display:block;font-size:13px;color:#b4cce0;margin-bottom:7px}.file code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:#dcf3ff}.file.staged{border-color:var(--mint)}
+.status{padding:11px 13px;background:#203952;border-radius:9px;color:#c8dbed;font-size:14px;margin-top:12px}
+.stageBar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}.stageBar span{font-size:12px;background:#234052;padding:6px 9px;border-radius:8px}
+.notice{border-left:3px solid var(--mint);padding:13px;background:#142c3b;border-radius:9px;margin:17px 0}.result{min-height:25px;color:var(--mint);font-weight:650;font-size:14px}.learn{font-size:14px;color:#d4e0ec}.learn strong{color:#fff}
+.footer{margin-top:34px;border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:13px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.panel{padding:18px}.files{grid-template-columns:1fr}.wrapper{padding:16px}}
+</style></head><body><div class="wrapper"><div class="top"><a href="./index.html">← Git Academy</a><span class="tag">No login · Local simulation</span></div>
+<span class="eyebrow">PRACTICE WORKSPACE</span><h1>Learn Git by typing commands.</h1>
+<p class="muted" style="max-width:770px">Try a guided Git workflow in your browser. Watch files move from your working directory to staging and then into a commit. This is a <strong>simulator</strong>, not a real system shell or Git installation.</p>
+<div class="layout"><section class="panel"><div class="eyebrow">GUIDED EXERCISE</div><h2>Your first Git commit</h2><p class="muted">Your goal: create a repository, add a file, stage it, and commit it. Complete the steps in order.</p>
+<div id="steps"></div><div class="actions"><button class="secondary" id="hint">Show hint</button><button class="secondary" id="reset">↻ Restart</button></div>
+<p id="hintArea" class="notice" hidden></p>
+<div class="notice"><strong>Remember</strong><br><span class="learn">Working directory = what you're editing. Staging area = what goes into your next snapshot. Repository = saved commits.</span></div>
+</section><section class="panel"><div class="eyebrow">INTERACTIVE SIMULATOR</div><h2>Practice terminal</h2><div class="terminal"><div class="termHead">● ● ● &nbsp; git-academy — simulated terminal</div><div id="screen" class="screen" role="log" aria-live="polite"></div>
+<form id="terminal" class="prompt"><span>$</span><input id="cmd" autocomplete="off" spellcheck="false" aria-label="Type a Git command" placeholder="Type git init and press Enter"><button class="primary" type="submit">Run</button></form></div>
+<div id="result" class="result" aria-live="polite"></div>
+<h3>Repository state</h3><div class="stageBar"><span id="repoPill">Repository: not initialized</span><span id="branchPill">Branch: —</span><span id="commitsPill">Commits: 0</span></div>
+<div class="files"><div class="file"><strong>01 · Working directory</strong><code id="working">No files yet</code></div><div class="file staged"><strong>02 · Staging area</strong><code id="staging">Empty</code></div><div class="file"><strong>03 · Repository history</strong><code id="history">No commits</code></div><div class="file"><strong>What changed?</strong><code id="meaning">Initialize a repository to begin.</code></div></div>
+</section></div><div class="footer">The practice terminal supports a safe subset of Git commands. It cannot read, write, or execute commands on your device. For authentic Git behavior, install <a href="https://git-scm.com/downloads" target="_blank" rel="noopener">Git</a> and repeat the exercise locally.</div></div>
+<script>
+const instructions=[
+{label:"Create a repository",cmd:"git init",why:"This creates the .git directory, where Git stores commits, refs and other metadata.",hint:"Type git init and press Enter."},
+{label:"Check your status",cmd:"git status",why:"Status reports your branch and whether any files are staged or untracked.",hint:"Run git status to inspect your new repository."},
+{label:"Create README.md",cmd:"touch README.md",why:"A new file starts untracked. Git does not automatically include it in commits.",hint:"Type touch README.md (a simulated file creation command)."},
+{label:"Write something to README",cmd:"echo Hello Git > README.md",why:"Now your working directory contains the text you want to record.",hint:"Type echo Hello Git > README.md."},
+{label:"Stage the file",cmd:"git add README.md",why:"Staging selects this version of README.md for the next commit.",hint:"Type git add README.md."},
+{label:"Inspect staged changes",cmd:"git diff --cached",why:"The cached diff shows what would be committed, not any un-staged changes.",hint:"Type git diff --cached."},
+{label:"Save your commit",cmd:'git commit -m "My first commit"',why:"A commit saves a snapshot of staged content in the repository history.",hint:'Type git commit -m "My first commit".'},
+{label:"See your history",cmd:"git log --oneline",why:"The log displays your saved commit and its short identifier.",hint:"Type git log --oneline."}
+];
+let state,step=0,output=[];
+function reset(){state={initialized:false,branch:"main",files:{},staged:{},commits:[]};step=0;output=["Git Academy simulator v1","Try the command shown on the left. Type help for supported commands."];document.getElementById("hintArea").hidden=true;render();document.getElementById("cmd").focus()}
+function show(text){output.push(text);if(output.length>65)output=output.slice(-65)}
+function quote(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function cmdRun(raw){const cmd=raw.trim().replace(/\s+/g," ");if(!cmd)return{ok:false,message:"Enter a command first."};
+if(cmd==="help")return{ok:false,message:"Supported: git init, git status, touch README.md, echo Hello Git > README.md, git add README.md, git diff, git diff --cached, git commit -m \"message\", git log --oneline, git branch"};
+if(cmd==="clear"){output=[];return{ok:false,message:"Terminal cleared."}};
+if(cmd==="git init"){if(state.initialized)return{ok:true,message:"Reinitialized existing Git repository."};state.initialized=true;return{ok:true,message:"Initialized empty Git repository in ./git-academy/.git/"}}
+if(!state.initialized)return{ok:false,message:"Not a Git repository. Start with git init."};
+if(cmd==="git status"){const files=Object.keys(state.files),staged=Object.keys(state.staged);return{ok:true,message:"On branch "+state.branch+"\n"+(state.commits.length?"":"No commits yet\n")+(staged.length?"Changes to be committed:\n  new file: README.md\n":files.length?"Untracked files:\n  README.md\n":"nothing to commit, working tree clean")}};
+if(cmd==="touch README.md"){state.files["README.md"]=state.files["README.md"]||"";return{ok:true,message:"Created README.md (untracked)."}}
+if(/^echo Hello Git > README\.md$/.test(cmd)){state.files["README.md"]="Hello Git\n";return{ok:true,message:"Wrote Hello Git to README.md."}}
+if(cmd==="git add README.md"){if(!Object.hasOwn(state.files,"README.md"))return{ok:false,message:"pathspec 'README.md' did not match any files"};state.staged["README.md"]=state.files["README.md"];return{ok:true,message:"Staged README.md for the next commit."}}
+if(cmd==="git diff --cached"||cmd==="git diff --staged"){return{ok:true,message:Object.keys(state.staged).length?"diff --git a/README.md b/README.md\nnew file mode 100644\n+++ b/README.md\n+"+(state.staged["README.md"]||"(empty file)").trim():"No staged changes."}}
+if(cmd==="git diff")return{ok:true,message:"No tracked unstaged modifications in this exercise."};
+const match=cmd.match(/^git commit -m ["'](.+)["']$/);if(match){if(!Object.keys(state.staged).length)return{ok:false,message:"nothing to commit (stage a file first)"};let id=("c0de"+(state.commits.length+1)+"a").slice(0,7);state.commits.push({id,msg:match[1],files:{...state.staged}});state.staged={};return{ok:true,message:"["+state.branch+" "+id+"] "+match[1]+"\n 1 file changed, 1 insertion(+)"}}
+if(cmd==="git log --oneline"){if(!state.commits.length)return{ok:false,message:"fatal: your current branch does not have any commits yet"};return{ok:true,message:state.commits.slice().reverse().map(x=>x.id+" "+x.msg).join("\n")}}
+if(cmd==="git branch")return{ok:true,message:"* "+state.branch};
+return{ok:false,message:"This command is not supported by the guided simulator. Try the next suggested command or type help."}
+}
+function render(){document.getElementById("steps").innerHTML=instructions.map((x,i)=>'<div class="step '+(i<step?"done":i===step?"current":"")+'"><div class="eyebrow">'+(i<step?"✓ COMPLETED":"STEP "+(i+1)+" OF "+instructions.length)+'</div><h3>'+quote(x.label)+'</h3>'+(i<=step?'<div class="cmd">'+quote(x.cmd)+'</div><p class="learn">'+quote(x.why)+'</p>':'')+'</div>').join("");
+document.getElementById("screen").textContent=output.join("\n\n");document.getElementById("screen").scrollTop=document.getElementById("screen").scrollHeight;
+document.getElementById("repoPill").textContent="Repository: "+(state.initialized?"initialized":"not initialized");
+document.getElementById("branchPill").textContent="Branch: "+(state.initialized?state.branch:"—");
+document.getElementById("commitsPill").textContent="Commits: "+state.commits.length;
+document.getElementById("working").textContent=Object.keys(state.files).length?Object.entries(state.files).map(([k,v])=>k+"\n"+(v||"(empty)")).join("\n"):"No files yet";
+document.getElementById("staging").textContent=Object.keys(state.staged).length?Object.entries(state.staged).map(([k,v])=>k+"\n"+(v||"(empty)")).join("\n"):"Empty";
+document.getElementById("history").textContent=state.commits.length?state.commits.slice().reverse().map(c=>c.id+" · "+c.msg).join("\n"):"No commits yet";
+document.getElementById("meaning").textContent=step>=instructions.length?"🎉 You created and inspected your first commit!":instructions[Math.min(step,instructions.length-1)].why;
+document.getElementById("result").textContent=step===instructions.length?"✓ Exercise complete! You saved a commit. Restart to practice again.":"Complete the current step: "+instructions[step].label;
+}
+document.getElementById("terminal").addEventListener("submit",e=>{e.preventDefault();const input=document.getElementById("cmd");let cmd=input.value.trim();if(!cmd)return;const result=cmdRun(cmd);show("$ "+cmd+"\n"+result.message);if(result.ok&&cmd===instructions[step]?.cmd)step++;else if(result.ok&&step===6&&/^git commit -m ["'].+["']$/.test(cmd))step++;
+input.value="";render()});
+document.getElementById("hint").onclick=()=>{let el=document.getElementById("hintArea");el.textContent=step>=instructions.length?"All steps complete. Restart to practice again.":instructions[step].hint;el.hidden=false};
+document.getElementById("reset").onclick=reset;reset();
+</script></body></html>
