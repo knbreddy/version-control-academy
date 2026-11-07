@@ -116,13 +116,13 @@ function create(input){
    for(const [n,c] of Object.entries(state.working))state.stage[n]=c;
    return result(true,"Staged working files.");
   }
-  m=cmd.match(/^git add (app\\.js|README\\.md)$/);
+  m=cmd.match(/^git add (app\.js|README\.md)$/);
   if(m){
    if(state.merge&&/^(<<<<<<<|=======|>>>>>>>)/m.test(state.working[m[1]]||""))return result(false,"Remove conflict markers before staging the resolution.");
    state.stage[m[1]]=state.working[m[1]];
    return result(true,"Staged "+m[1]+(state.merge?" as the merge resolution.":"."));
   }
-  m=raw.match(/^git commit -m\\s+["']([^"']+)["']$/);
+  m=raw.match(/^git commit -m\s+["']([^"']+)["']$/);
   if(m){
    if(!Object.keys(state.stage).length)return result(false,"Nothing staged. Run git add first.");
    const files={...tracked(),...state.stage};
