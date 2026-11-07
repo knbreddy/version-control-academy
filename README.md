@@ -10,6 +10,7 @@ A no-login, static learning website for **Git → GitHub → GitHub Actions**.
 - 30 guided practice lab instructions with prerequisites and expected verification steps
 - 57 review flashcards
 - 27 short quiz questions across 9 modules, with feedback and stored scores
+- A unified persistent Git-to-GitHub workspace with editable files, working tree, staging, commits, branches, simulated remote tracking, a pull request, review gate, CI and merge
 - A beginner Git playground with 8 guided commands
 - A branching and merging simulator with a 19-step walkthrough, including a conflict and two-parent merge
 - 4 interactive engineering missions (12 decisions): selective staging, merge conflicts, PR review, and CI troubleshooting
@@ -21,6 +22,7 @@ A no-login, static learning website for **Git → GitHub → GitHub Actions**.
 
 Start with the [academy](https://knbreddy.github.io/version-control-academy/).
 
+- [Unified Git workflow workspace](https://knbreddy.github.io/version-control-academy/workspace.html)
 - [First-commit simulator](https://knbreddy.github.io/version-control-academy/playground.html)
 - [Branch/merge simulator](https://knbreddy.github.io/version-control-academy/branch-lab.html)
 - [Interactive engineering missions](https://knbreddy.github.io/version-control-academy/missions.html)
@@ -31,7 +33,7 @@ Start with the [academy](https://knbreddy.github.io/version-control-academy/).
 
 ## GitHub Pages and testing
 
-GitHub Actions runs `node tests/site.test.cjs` before deploying the public site. The smoke tests validate content mappings, JavaScript syntax, the full first-commit sequence, the two-parent merge scenario, all four missions with retries, every quiz, and four broken/fixed GitHub Actions workflow scenarios. GitHub Pages deploys from `main`.
+GitHub Actions runs `node tests/site.test.cjs` before deploying the public site. The smoke tests validate content mappings, JavaScript syntax, the full first-commit sequence, the two-parent merge scenario, all four missions with retries, every quiz, four broken/fixed GitHub Actions workflow scenarios, and the unified Git-to-PR workflow (including failure paths and local/remote divergence). GitHub Pages deploys from `main`.
 
 ## Not yet covered by automated tests
 
