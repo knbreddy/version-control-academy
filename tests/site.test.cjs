@@ -107,8 +107,8 @@ function check() {
   const repaired = [
     actions.api.SCENARIOS[0].starter.replace('needs: compile','needs: build'),
     actions.api.SCENARIOS[1].starter.replace('npm run test:unit','npm test'),
-    actions.api.SCENARIOS[2].starter.replace('permissions: write-all','permissions:\\n  contents: read'),
-    actions.api.SCENARIOS[3].starter.replace('  deploy:\\n    runs-on:', '  deploy:\\n    needs: test\\n    environment: github-pages\\n    permissions:\\n      pages: write\\n      id-token: write\\n    runs-on:')
+    actions.api.SCENARIOS[2].starter.replace('permissions: write-all','permissions:\n  contents: read'),
+    actions.api.SCENARIOS[3].starter.replace('  deploy:\n    runs-on:', '  deploy:\n    needs: test\n    environment: github-pages\n    permissions:\n      pages: write\n      id-token: write\n    runs-on:')
   ];
   for(let i=0;i<4;i++){
     const original = actions.api.execute(actions.api.SCENARIOS[i].starter,i);
