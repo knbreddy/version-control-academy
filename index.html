@@ -116,7 +116,7 @@ let topic=document.getElementById("topic");topic.onchange=()=>{selectedTopic=top
 let el=document.getElementById("flash");const flip=()=>{revealed=!revealed;render();document.getElementById("flash").focus()};
 el.onclick=flip;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();flip()}};
 document.getElementById("flip").onclick=flip;document.getElementById("prev").onclick=()=>cardNav(-1);document.getElementById("next").onclick=()=>cardNav(1);
-for(let rating of ["known","missed"]){document.getElementById(rating==="known"?"known":"miss").onclick=()=>{let ids=cardIds(),pos=ids.indexOf(currentCard);state.review[currentCard]=rating;save();let next=cardIds();currentCard=next.length?next[Math.min(pos,next.length-1)]:currentCard;revealed=false;render()}}
+for(let rating of ["known","missed"]){document.getElementById(rating==="known"?"known":"miss").onclick=()=>{let ids=cardIds(),pos=ids.indexOf(currentCard);state.review[currentCard]=rating;save();let next=cardIds();currentCard=next.length?next[(Math.min(pos+1,next.length-1))%next.length]:currentCard;revealed=false;render()}}
 document.getElementById("shuffle").onclick=()=>{let ids=cardIds();currentCard=ids[Math.floor(Math.random()*ids.length)];revealed=false;render()};
 document.getElementById("reviewMissed").onclick=()=>{missedOnly=!missedOnly;let ids=cardIds();if(ids.length)currentCard=ids[0];revealed=false;render()};
 }}
