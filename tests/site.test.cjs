@@ -169,6 +169,55 @@ function check() {
   assert.equal(failedCI.command('gh pr review --approve').ok,false);
   console.log('✓ Unified Git workspace: edit, stage, commit, remote push, PR approval, merge, fetch, pull and failure paths');
 
+
+  const collaborative=workspaceContext.GitWorkspaceEngine.create();
+  function runCollab(cmd){const r=collaborative.command(cmd);assert.equal(r.ok,true,cmd+': '+r.message);return r}
+  runCollab('git switch -c feature/welcome');
+  assert.equal(collaborative.edit('app.js','console.log("Hello, Git!");\n').ok,true);
+  runCollab('git add app.js');
+  runCollab('git commit -m "Alice updates greeting"');
+  runCollab('git push -u origin feature/welcome');
+  runCollab('gh pr create --fill');
+  assert.equal(collaborative.collaboratorPush().ok,true);
+  assert.equal(collaborative.collaboratorPush().ok,false,'Bob should only push once in the guided scenario');
+  assert.equal(collaborative.mergeability().ok,false,'Concurrent same-line change should block remote merge');
+  assert.equal(collaborative.command('gh pr review --approve').ok,true,'Review may be recorded but merging still requires conflict resolution');
+  assert.equal(collaborative.command('gh pr merge').ok,false,'An unresolved conflict must never reach origin/main');
+  assert.equal(collaborative.snapshot().remoteTracking.main,'c001','Bob push must not silently update tracking refs');
+  runCollab('git fetch origin');
+  assert.equal(collaborative.snapshot().remoteTracking.main,collaborative.snapshot().remote.branches.main);
+  runCollab('git merge origin/main');
+  assert.deepEqual(Array.from(collaborative.snapshot().merge.conflicts),['app.js']);
+  assert.match(collaborative.snapshot().working['app.js'],/<<<<<<< HEAD/);
+  assert.equal(collaborative.command('git add app.js').ok,false,'Unresolved markers must not be accepted');
+  assert.equal(collaborative.command('git commit -m "Skip resolution"').ok,false);
+  runCollab('git merge --abort');
+  assert.equal(collaborative.snapshot().merge,null);
+  assert.equal(collaborative.snapshot().working['app.js'],'console.log("Hello, Git!");\n');
+  runCollab('git merge origin/main');
+  assert.equal(collaborative.edit('app.js','console.log("Hello, Git!");\nconsole.log("Hello from Bob!");\n').ok,true);
+  runCollab('git add app.js');
+  runCollab('git commit -m "Resolve competing greetings"');
+  let collabState=collaborative.snapshot();
+  assert.equal(collabState.merge,null);
+  assert.deepEqual(Array.from(collabState.commits[collabState.branches[collabState.head]].parents),['c002','c003']);
+  assert.equal(collaborative.mergeability().ok,false,'PR still points at stale pushed branch');
+  runCollab('git push -u origin feature/welcome');
+  assert.equal(collaborative.mergeability().ok,true);
+  assert.equal(collaborative.snapshot().pr.approved,false,'Updating PR invalidates stale approval');
+  runCollab('gh pr review --approve');
+  runCollab('gh pr merge');
+  runCollab('git switch main');
+  runCollab('git fetch origin');
+  runCollab('git pull --ff-only');
+  collabState=collaborative.snapshot();
+  assert.equal(collabState.branches.main,collabState.remote.branches.main);
+  assert.match(collabState.working['app.js'],/Hello from Bob/);
+  assert.match(collabState.working['app.js'],/Hello, Git/);
+  assert.equal(collaborative.suggested().step,9);
+  assert.equal(workspaceContext.GitWorkspaceEngine.create(collabState).snapshot().collaborator.commit,'c003');
+  console.log('✓ Multi-developer Git: conflict blocking, stale refs, merge abort, marker rejection, two-parent resolution, PR review and remote merge');
+
   console.log('All site checks passed.');
 }
 check();
