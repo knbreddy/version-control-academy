@@ -6,7 +6,7 @@ function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function initial(){
  const first={id:"c001",parents:[],message:"Initial project",files:copy(DEFAULT_FILES)};
  return {version:1,next:2,commits:{c001:first},branches:{main:"c001"},head:"main",
-  remote:{name:"origin",branches:{main:"c001"}},working:copy(DEFAULT_FILES),stage:{},pr:null,events:[],last:"",author:"Learner"};
+  remote:{name:"origin",branches:{main:"c001"}},remoteTracking:{main:"c001"},working:copy(DEFAULT_FILES),stage:{},pr:null,events:[],last:"",author:"Learner"};
 }
 function create(input){
  let state=input&&input.version===1?copy(input):initial();
@@ -104,9 +104,9 @@ function create(input){
    state.remote.branches[branch]=active();if(state.pr&&!state.pr.merged&&state.pr.branch===branch)state.pr.approved=false;
    return result(true,"Pushed "+branch+" to origin at "+active()+". GitHub can now compare this branch.");
   }
-  if(cmd==="git fetch origin")return result(true,"Fetched origin. Remote-tracking refs now reflect the simulated remote (working tree unchanged).");
+  if(cmd==="git fetch origin"){state.remoteTracking=copy(state.remote.branches);return result(true,"Fetched origin: updated remote-tracking refs. Local branch and working files are unchanged.");}
   if(cmd==="git pull --ff-only"){if(!clean())return result(false,"Commit or discard changes before pulling.");
-   const tip=state.remote.branches[state.head];if(!tip)return result(false,"No upstream branch found on origin.");
+   state.remoteTracking=copy(state.remote.branches);const tip=state.remoteTracking[state.head];if(!tip)return result(false,"No upstream branch found on origin.");
    if(!ancestor(active(),tip))return result(false,"Not possible to fast-forward this branch.");
    state.branches[state.head]=tip;state.working=tracked();return result(true,"Fast-forwarded "+state.head+" to "+tip+". Local files now match origin/"+state.head+".");
   }
@@ -125,7 +125,7 @@ function create(input){
   if(!p)return {step:5,title:"Open a pull request",command:"gh pr create --fill",detail:"Propose merging the feature branch into main."};
   if(!p.approved&&!p.merged)return {step:6,title:"Review and approve",command:"gh pr review --approve",detail:"An independent simulated reviewer inspects the diff and required checks."};
   if(!p.merged)return {step:7,title:"Merge after checks pass",command:"gh pr merge",detail:"Branch protection requires a passing check and approval."};
-  if(state.branches.main!==state.remote.branches.main)return {step:8,title:"Update local main",command:"git switch main",detail:"Switch back to main, then fetch and pull the remote merge."};
+  if(state.branches.main!==state.remote.branches.main)return state.head==="main"?{step:8,title:"Fast-forward local main",command:"git pull --ff-only",detail:"Fetch is safe to explore first; pull --ff-only brings the merged commit into your local main."}:{step:8,title:"Switch to main",command:"git switch main",detail:"Switch to local main before pulling the merged changes."};
   return {step:9,title:"Project completed",command:"git log --oneline",detail:"Your local main now includes the reviewed feature."};
  }
  function snapshot(){return copy(state)}
