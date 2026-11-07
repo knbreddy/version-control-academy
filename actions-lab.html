@@ -1,0 +1,105 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="./favicon.svg" type="image/svg+xml"><meta name="theme-color" content="#0b1424"><title>Actions Workflow Lab | Git Academy</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1424;--card:#12253b;--soft:#1b324a;--line:#3a536c;--text:#ecf5ff;--muted:#b0c3d7;--accent:#6ce0ba;--warn:#ffcc98}
+*{box-sizing:border-box}body{background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,Segoe UI,sans-serif;margin:0}button,textarea{font:inherit}button{cursor:pointer}a{color:var(--accent)}a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid #a2bdff;outline-offset:3px}.wrap{max-width:1340px;margin:auto;padding:24px 24px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}.top a{font-weight:750;text-decoration:none}.tag{font-size:12px;border:1px solid var(--line);border-radius:30px;padding:4px 11px;color:var(--muted)}h1{font-size:clamp(31px,4.5vw,49px);line-height:1.17;margin:18px 0 10px}h2{font-size:24px;margin:6px 0 13px}h3{font-size:17px;margin:7px 0}.muted{color:var(--muted)}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.10em;color:var(--accent);text-transform:uppercase}.intro{max-width:900px;color:var(--muted);font-size:17px}.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:26px 0}.tab{padding:13px 15px;text-align:left;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text)}.tab.selected{border-color:var(--accent);background:#16403e}.tab small{display:block;font-size:12px;color:var(--muted);margin-top:5px}.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.95fr);gap:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0}.editor{width:100%;min-height:395px;resize:vertical;background:#071323;color:#dcf4ff;border:1px solid #536b84;border-radius:10px;padding:16px;tab-size:2;font:14px/1.6 ui-monospace,Consolas,monospace;white-space:pre;overflow:auto}.hint{background:#203c47;border-left:3px solid var(--accent);padding:13px;border-radius:9px;margin-top:14px}.buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}.primary{background:var(--accent);border:0;color:#063021;font-weight:800;padding:11px 16px;border-radius:9px}.secondary{border:1px solid #61778e;background:#2b435b;color:var(--text);padding:10px 14px;border-radius:9px}.checks{padding:0;list-style:none;display:grid;gap:8px;margin:12px 0 23px}.checks li{padding:8px 11px;border-radius:9px;background:#1e344b;font-size:14px}.checks li.ok{color:#9cf2cb}.checks li.fail{color:#ffd09b}.job{border:1px solid #506b82;border-radius:11px;background:#0e2236;padding:15px;margin:12px 0}.job.success{border-color:#55c89e}.job.failed{border-color:#e7a083}.job.skipped{opacity:.65}.job .state{font-weight:800;font-size:12px;text-transform:uppercase}.job code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.7 ui-monospace,Consolas,monospace;margin-top:8px;color:#bed1e4}.logs{white-space:pre-wrap;overflow-wrap:anywhere;max-height:265px;overflow:auto;background:#071323;border-radius:10px;padding:14px;font:13px/1.6 ui-monospace,Consolas,monospace;min-height:130px}.feedback{padding:13px;border-radius:9px;background:#183b3b;color:#b5f6d8;margin-top:14px}.feedback.warn{background:#433329;color:#ffdfbc}.progress{height:8px;background:#2a4158;border-radius:20px;overflow:hidden}.progress>div{background:var(--accent);height:100%;width:0}.footer{margin-top:35px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.editor{min-height:300px}.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:510px){.wrap{padding:16px 13px 50px}.panel{padding:16px}.tabs{gap:7px}.tab{padding:11px}.buttons button{flex:1 1 auto}}
+</style></head><body><main class="wrap"><div class="top"><a href="./index.html">← Git Academy</a><span class="tag">Browser simulation · No login</span></div><div class="eyebrow" style="margin-top:29px">INTERACTIVE GITHUB ACTIONS</div><h1>Fix the workflow. Run the pipeline.</h1><p class="intro">Edit the YAML, simulate job scheduling and inspect logs. Your edits must satisfy the goal, not merely produce a green label. Learn how dependencies, tests, permissions and deployments work together.</p>
+<div id="tabs" class="tabs" role="tablist" aria-label="Choose a workflow mission"></div><div class="layout"><section class="panel"><div class="eyebrow" id="level"></div><h2 id="title"></h2><p class="muted" id="story"></p><div class="eyebrow" style="margin-top:19px">WORKFLOW EDITOR · .github/workflows/ci.yml</div><textarea id="editor" class="editor" spellcheck="false" aria-label="Editable GitHub Actions YAML"></textarea><div class="buttons"><button class="primary" id="run">▶ Simulate workflow</button><button class="secondary" id="hint">Show hint</button><button class="secondary" id="reset">↻ Restore example</button></div><p id="hintArea" class="hint" hidden></p></section>
+<section class="panel"><div class="eyebrow">VERIFY THE LEARNING GOAL</div><h2 id="goal"></h2><ul id="checks" class="checks"></ul><div class="progress"><div id="progressBar"></div></div><div id="feedback" class="feedback" role="status" aria-live="polite">Edit the YAML and press Simulate workflow to begin.</div><h3 style="margin-top:24px">Job execution graph</h3><div id="jobs"></div><h3>Runner logs</h3><div id="logs" class="logs">No workflow run yet.</div></section></div><p class="footer">This is a limited YAML and GitHub Actions teaching simulator, not GitHub's real workflow interpreter. It recognizes common jobs, needs, permissions, environment and run steps in the examples. No code or YAML is executed and no GitHub account is used. Validate production workflows using real GitHub Actions.</p></main>
+<script>
+const SCENARIOS=[{"id":"dependencies","level":"Beginner","title":"Fix a broken dependency","goal":"Make tests wait for the actual build job.","story":"A teammate renamed the build job but forgot to update the tests job. GitHub cannot build a valid dependency graph.","starter":"name: Build and test\non: push\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm run build\n  test:\n    needs: compile\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm test","hint":"The name after needs must match a job ID under jobs. Look at build vs compile.","requirements":["The workflow has a build job and a test job.","The test job depends on build.","Both jobs finish successfully."],"explain":"needs creates a dependency edge. Job IDs—not display names—are referenced. If an upstream job fails, its dependent job normally does not run."},{"id":"test-command","level":"Beginner","title":"Diagnose a failing test job","goal":"Fix an invalid test command without disabling tests.","story":"CI builds the project successfully but the test step fails because the package script name is wrong. The simulated package exposes npm test and npm run build.","starter":"name: Verify changes\non: pull_request\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm run test:unit","hint":"The project has a test script called test, not test:unit. Keep the test in CI.","requirements":["The workflow contains a test job.","The job actually runs the supported test script.","The job completes successfully."],"explain":"CI should execute the same supported test command as the project. Removing or skipping the test can produce a misleading green build."},{"id":"permissions","level":"Intermediate","title":"Reduce workflow token risk","goal":"Run CI with only read access to repository contents.","story":"This pull-request workflow needs to read code and run tests, but it asks GitHub for unnecessarily broad write permissions.","starter":"name: PR verification\non: pull_request\npermissions: write-all\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm test","hint":"Replace write-all with a permissions mapping that grants contents: read, and no write scopes.","requirements":["The workflow only asks for contents: read.","No broad write permission remains.","The test job passes."],"explain":"Limit GITHUB_TOKEN permissions to the smallest scope that works. PR verification usually does not need repository write access."},{"id":"deployment","level":"Advanced","title":"Protect a Pages deployment","goal":"Run build, then tests, then deploy with the right Pages permissions.","story":"A site is deployed as soon as the workflow starts. A safe pipeline needs verified dependencies and restricted deployment permissions.","starter":"name: Publish website\non: push\npermissions:\n  contents: read\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm run build\n  test:\n    needs: build\n    runs-on: ubuntu-latest\n    steps:\n      - run: npm test\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - run: deploy-pages","hint":"Make deploy depend on test. Grant pages: write and id-token: write inside deploy, and set environment: github-pages.","requirements":["The test job depends on build.","Deploy waits for a successful test job.","Deploy has Pages and OIDC permissions scoped to its job.","Deploy targets the github-pages environment."],"explain":"Dependencies gate publication, and job-scoped permissions let deploy write Pages without granting those privileges to testing jobs."}];
+const STORAGE="git-academy-actions-lab-v1";
+let current=0,editorValues={},attempts={},completed={};try{const saved=JSON.parse(localStorage.getItem(STORAGE)||"{}");editorValues=saved.editorValues||{};completed=saved.completed||{};attempts=saved.attempts||{}}catch{}
+const $=id=>document.getElementById(id);
+function persist(){try{localStorage.setItem(STORAGE,JSON.stringify({editorValues,attempts,completed}))}catch{}}
+function splitInline(value){return String(value||"").replace(/^["']|["']$/g,"").trim()}
+function parseWorkflow(source){
+const lines=source.replace(/\r\n/g,"\n").split("\n");let errors=[],jobs={},rootPermissions={},currentJob=null,section=null,scope=null,seenJobs=false,rootEvent=false;
+for(let i=0;i<lines.length;i++){
+let line=lines[i];if(!line.trim()||/^\s*#/.test(line))continue;
+if(/\t/.test(line)){errors.push("Line "+(i+1)+": tabs are not allowed for YAML indentation");continue}
+const indent=line.match(/^ */)[0].length,trim=line.trim();
+if(indent===0){currentJob=null;scope=null;section=null;if(/^on:\s*\S+/.test(trim))rootEvent=true;if(trim==="jobs:"){seenJobs=true;section="jobs";continue}if(trim==="permissions:"){section="root-permissions";continue}if(/^(name|on|permissions):/.test(trim))continue;errors.push("Line "+(i+1)+": unsupported top-level field "+trim.split(":")[0]);continue}
+if(section==="root-permissions"&&indent===2){const m=trim.match(/^([\w-]+):\s*(\S+)$/);if(m){rootPermissions[m[1]]=splitInline(m[2]);continue}}
+if(section==="jobs"&&indent===2){const m=trim.match(/^([\w-]+):\s*$/);if(m){currentJob=m[1];jobs[currentJob]={id:currentJob,needs:[],runsOn:null,steps:[],permissions:{},environment:null};scope=null;continue}}
+if(!currentJob){errors.push("Line "+(i+1)+": unexpected indentation or missing jobs block");continue}
+const job=jobs[currentJob];
+if(indent===4){let m;
+if((m=trim.match(/^needs:\s*(.+)$/))){const val=m[1].trim();job.needs=val.startsWith("[")?val.replace(/[\[\]]/g,"").split(",").map(x=>x.trim()):[val];scope=null;continue}
+if((m=trim.match(/^runs-on:\s*(.+)$/))){job.runsOn=splitInline(m[1]);scope=null;continue}
+if((m=trim.match(/^environment:\s*(\S+)$/))){job.environment=splitInline(m[1]);scope=null;continue}
+if(trim==="steps:"){scope="steps";continue}
+if(trim==="permissions:"){scope="job-permissions";continue}
+if(/^\w+:/.test(trim)){scope=null;continue}
+}
+if(scope==="job-permissions"&&indent===6){const m=trim.match(/^([\w-]+):\s*(\S+)$/);if(m){job.permissions[m[1]]=splitInline(m[2]);continue}}
+if(scope==="steps"&&indent>=6){const m=trim.match(/^(?:-\s*)?run:\s*(.+)$/);if(m){job.steps.push(splitInline(m[1]));continue}if(/^-\s*(uses|name):/.test(trim))continue}
+}
+if(!seenJobs)errors.push("Missing jobs: section");
+if(!Object.keys(jobs).length)errors.push("No jobs were defined");
+if(!rootEvent)errors.push("The exercise requires an event such as on: push or on: pull_request");
+for(const job of Object.values(jobs)){if(!job.runsOn)errors.push(job.id+": missing runs-on");if(!job.steps.length)errors.push(job.id+": no supported run steps found");for(const dep of job.needs)if(!jobs[dep])errors.push(job.id+": unknown needs target '"+dep+"'");if(job.needs.includes(job.id))errors.push(job.id+": cannot depend on itself")}
+return {jobs,rootPermissions,errors,source};
+}
+function runJob(job,permissions){
+const log=[],bad=[];
+for(const command of job.steps){
+log.push("$ "+command);
+if(command==="npm run test:unit"){log.push("npm error Missing script: test:unit");bad.push("Unknown npm script 'test:unit'");break}
+if(command==="npm test"||command==="npm run build"||/^echo\s+/.test(command)){log.push(command==="npm test"?"PASS simulated unit tests":command==="npm run build"?"Build completed":"Printed message");continue}
+if(command==="deploy-pages"){if(permissions.pages!=="write"||permissions["id-token"]!=="write")bad.push("Pages deployment requires pages: write and id-token: write");else log.push("Pages artifact published (simulated)");break}
+log.push("Unsupported runner command — skipped in simulator");bad.push("Unsupported command: "+command);break
+}
+return{status:bad.length?"failed":"success",log:log.concat(bad),errors:bad}
+}
+function simulate(source){
+const parsed=parseWorkflow(source),jobs=parsed.jobs,graph=[],logs=[],global=parsed.rootPermissions;
+if(parsed.errors.length)return{parsed,graph,logs:parsed.errors.slice(),ready:false,checks:[]};
+const remaining=new Set(Object.keys(jobs)),statuses={},limit=Object.keys(jobs).length+1;
+for(let round=0;round<limit&&remaining.size;round++){let advance=false;
+for(const id of [...remaining]){const j=jobs[id];if(j.needs.some(dep=>remaining.has(dep)))continue;
+let result;if(j.needs.some(dep=>statuses[dep]!=="success"))result={status:"skipped",log:["Skipped: dependency did not succeed"]};
+else result=runJob(j,{...global,...j.permissions});
+statuses[id]=result.status;graph.push({id,status:result.status,needs:j.needs,log:result.log});logs.push("JOB "+id+" ["+result.status+"]",...result.log);remaining.delete(id);advance=true}
+if(!advance)break
+}
+for(const id of remaining){graph.push({id,status:"blocked",needs:jobs[id].needs,log:["Dependency cycle detected"]});logs.push("JOB "+id+": dependency cycle detected")}
+return{parsed,graph,logs,ready:!remaining.size&&graph.every(x=>x.status==="success"),checks:[]}
+}
+function evaluate(index,source,result){
+const mission=SCENARIOS[index],jobs=result.parsed.jobs,perm=result.parsed.rootPermissions,test=jobs.test,build=jobs.build,deploy=jobs.deploy,allSuccessful=result.ready,find=id=>result.graph.find(j=>j.id===id)?.status==="success";
+let conditions=[];
+if(index===0)conditions=[!!build&&!!test,!!test&&test.needs.includes("build"),find("build")&&find("test")&&allSuccessful];
+if(index===1)conditions=[!!test,!!test&&test.steps.includes("npm test")&&!test.steps.includes("npm run test:unit"),find("test")&&allSuccessful];
+if(index===2)conditions=[perm.contents==="read"&&!Object.values(perm).some(x=>x.includes("write"))&&!/permissions:\s*write-all/.test(source),!Object.entries(jobs).some(([_,v])=>Object.values(v.permissions).some(x=>x.includes("write"))),find("test")&&allSuccessful];
+if(index===3)conditions=[!!test&&test.needs.includes("build"),!!deploy&&deploy.needs.includes("test"),!!deploy&&deploy.permissions.pages==="write"&&deploy.permissions["id-token"]==="write"&&perm.contents==="read",!!deploy&&deploy.environment==="github-pages"&&find("deploy")&&allSuccessful];
+return{conditions,passed:conditions.length===mission.requirements.length&&conditions.every(Boolean)&&result.parsed.errors.length===0,mission};
+}
+function saveEditor(){editorValues[SCENARIOS[current].id]=$("editor").value;persist()}
+function choose(index){saveEditor();current=index;render();$("editor").value=editorValues[SCENARIOS[current].id]??SCENARIOS[current].starter;display(null)}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function display(result){
+const mission=SCENARIOS[current],checkList=mission.requirements,passed=result?.evaluation?.conditions||[],percent=passed.length?100*passed.filter(Boolean).length/passed.length:0;
+$("checks").innerHTML=checkList.map((label,i)=>'<li class="'+(result?(passed[i]?"ok":"fail"):"")+'">'+(result?(passed[i]?"✓ ":"○ "):"○ ")+escapeHtml(label)+'</li>').join("");
+$("progressBar").style.width=percent+"%";
+$("jobs").innerHTML=result?.simulation?.graph.length?result.simulation.graph.map(j=>'<div class="job '+j.status+'"><strong>'+escapeHtml(j.id)+'</strong> · <span class="state">'+escapeHtml(j.status)+'</span><div class="muted">needs: '+escapeHtml(j.needs.join(", ")||"none")+'</div><code>'+escapeHtml(j.log.join("\n"))+'</code></div>').join(""):'<p class="muted">No jobs simulated yet. Press Simulate workflow.</p>';
+$("logs").textContent=result?.simulation?.logs.join("\n")||"No workflow run yet.";
+let message;if(!result)message="Edit the YAML and run the simulator to check your work.";
+else if(result.evaluation.passed)message="✓ Mission complete. The simulated jobs ran successfully and the learning goals are satisfied.";
+else if(result.simulation.parsed.errors.length)message="Workflow validation failed: "+result.simulation.parsed.errors.join(" · ");
+else message="Not finished. Inspect failed checks and runner logs, then revise the YAML.";
+$("feedback").textContent=message;$("feedback").classList.toggle("warn",!!result&&!result.evaluation.passed);
+}
+function execute(source,index=current){let simulation=simulate(source),evaluation=evaluate(index,source,simulation);return{simulation,evaluation}}
+function render(){
+const mission=SCENARIOS[current];
+$("tabs").innerHTML=SCENARIOS.map((m,i)=>'<button class="tab '+(i===current?"selected":"")+'" role="tab" aria-selected="'+(i===current)+'" data-index="'+i+'"><strong>'+(completed[m.id]?"✓ ":"")+(i+1)+". "+escapeHtml(m.title)+'</strong><small>'+escapeHtml(m.level)+'</small></button>').join("");
+$("level").textContent=mission.level;$("title").textContent=mission.title;$("story").textContent=mission.story;$("goal").textContent=mission.goal;
+$("editor").value=editorValues[mission.id]??mission.starter;$("hintArea").hidden=true;document.querySelectorAll("[data-index]").forEach(el=>el.onclick=()=>choose(Number(el.dataset.index)));
+}
+$("run").onclick=()=>{let source=$("editor").value;saveEditor();let result=execute(source);attempts[SCENARIOS[current].id]=(attempts[SCENARIOS[current].id]||0)+1;if(result.evaluation.passed)completed[SCENARIOS[current].id]=true;persist();display(result);renderTabsOnly()};
+function renderTabsOnly(){$("tabs").innerHTML=SCENARIOS.map((m,i)=>'<button class="tab '+(i===current?"selected":"")+'" role="tab" aria-selected="'+(i===current)+'" data-index="'+i+'"><strong>'+(completed[m.id]?"✓ ":"")+(i+1)+". "+escapeHtml(m.title)+'</strong><small>'+escapeHtml(m.level)+'</small></button>').join("");document.querySelectorAll("[data-index]").forEach(el=>el.onclick=()=>choose(Number(el.dataset.index)))}
+$("hint").onclick=()=>{$("hintArea").textContent=SCENARIOS[current].hint;$("hintArea").hidden=false};
+$("reset").onclick=()=>{editorValues[SCENARIOS[current].id]=SCENARIOS[current].starter;persist();render();display(null)};
+render();display(null);
+</script></body></html>
