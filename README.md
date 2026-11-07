@@ -1,20 +1,23 @@
-# Version Control Academy
+# Git Academy
 
-Free, interactive beginner-to-advanced learning roadmap for **CVS → Git → GitHub → GitHub Actions**.
+A beginner-friendly, no-sign-in static learning website for **Git → GitHub → GitHub Actions**.
 
-- 10 modules and 40 lessons
-- 33 guided hands-on labs
-- 58 interactive flashcards
-- Browser-only progress storage with JSON export/import
-- No sign-in for reading, reviewing or tracking progress
+**Live site:** https://knbreddy.github.io/version-control-academy/
 
-## GitHub Pages deployment
-Visit **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**.
-The included workflow `.github/workflows/pages.yml` deploys the site from the main branch.
+## Learning experience
 
-Expected URL: https://knbreddy.github.io/version-control-academy/
+- **9 modules / 36 focused lessons** with explanations, worked examples and comprehension checks
+- **30 guided hands-on labs** with prerequisites, instructions and verification steps
+- **57 flashcards** with topic selection and missed-card review
+- A **Continue learning** dashboard and clear next steps
+- Progress stored locally in your browser, with JSON export/import (no login)
 
-## Privacy
-No sign-in, analytics, backend, or server-side storage. Local progress is saved in the browser and can be exported.
+## Deployment
 
-Real GitHub collaboration labs require a GitHub account.
+This repository deploys automatically to GitHub Pages using `.github/workflows/pages.yml` whenever `main` changes.
+
+## Notes
+
+Existing lesson and lab completions remain in browser storage across the Git-only redesign. Previous flashcard ratings are reset because card identities changed, preventing ratings from being shown against the wrong card.
+
+For real GitHub repository and workflow exercises, learners need their own GitHub account.
