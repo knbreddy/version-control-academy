@@ -42,12 +42,12 @@ function check() {
   const index = html('index.html');
   const guide = fs.readFileSync('content.js','utf8');
   assert(!/\bCVS\b/i.test(index+guide), 'CVS should not be present');
-  for (const page of ['index.html','playground.html','missions.html','branch-lab.html','quizzes.html']) {
+  for (const page of ['index.html','playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html']) {
     assert(html(page).includes('favicon.svg'), 'Favicon missing on '+page);
     new vm.Script(script(page),{filename:page});
     console.log('✓ Script syntax: '+page);
   }
-  for (const link of ['playground.html','missions.html','branch-lab.html','quizzes.html']) {
+  for (const link of ['playground.html','missions.html','branch-lab.html','quizzes.html','actions-lab.html']) {
     assert(index.includes(link), 'Missing nav to '+link);
   }
   const dataset = JSON.parse(index.split('const DATA=')[1].split(';\nconst KEY=')[0]);
@@ -101,6 +101,27 @@ function check() {
     assert.equal(quiz.api.getState().scores[m+1].score,3);
   }
   console.log('✓ Module quizzes: 27 scored answers');
+
+  const actions = runWithDom('actions-lab.html','SCENARIOS, execute');
+  assert.equal(actions.api.SCENARIOS.length,4);
+  const repaired = [
+    actions.api.SCENARIOS[0].starter.replace('needs: compile','needs: build'),
+    actions.api.SCENARIOS[1].starter.replace('npm run test:unit','npm test'),
+    actions.api.SCENARIOS[2].starter.replace('permissions: write-all','permissions:\\n  contents: read'),
+    actions.api.SCENARIOS[3].starter.replace('  deploy:\\n    runs-on:', '  deploy:\\n    needs: test\\n    environment: github-pages\\n    permissions:\\n      pages: write\\n      id-token: write\\n    runs-on:')
+  ];
+  for(let i=0;i<4;i++){
+    const original = actions.api.execute(actions.api.SCENARIOS[i].starter,i);
+    assert.equal(original.evaluation.passed,false,'Broken starter should not pass mission '+i);
+    const solved = actions.api.execute(repaired[i],i);
+    assert.equal(solved.evaluation.passed,true,'Corrected workflow should pass mission '+i+': '+solved.simulation.parsed.errors.join(', '));
+    assert(solved.simulation.graph.every(j=>j.status==='success'), 'Solved jobs failed on mission '+i);
+  }
+  const bad = actions.api.execute(repaired[0].replace('needs: build','needs: nonexistent'),0);
+  assert.equal(bad.evaluation.passed,false);
+  assert(bad.simulation.parsed.errors.some(e=>e.includes('unknown needs target')));
+  console.log('✓ Actions YAML lab: four failures, four verified fixes, invalid dependency');
+
   console.log('All site checks passed.');
 }
 check();
