@@ -67,7 +67,7 @@ function create(input){
   const raw=String(line||"").trim(),cmd=raw.replace(/\s+/g," ");if(!cmd)return result(false,"Enter a command.");
   if(cmd==="help")return result(true,"Commands: git status, git diff, git diff --cached, git branch, git log --oneline, git switch, git add, git commit -m, git push -u origin, git fetch origin, git pull --ff-only, gh pr create, gh pr review --approve, gh pr merge, git remote -v");
   if(cmd==="git status"){
-    const unstage=Object.keys(state.working).filter(k=>state.working[k]!==tracked()[k]&&!Object.prototype.hasOwnProperty.call(state.stage,k));
+    const unstage=Object.keys(state.working).filter(k=>state.working[k]!==((Object.prototype.hasOwnProperty.call(state.stage,k))?state.stage[k]:tracked()[k]));
     const stage=Object.keys(state.stage);
     return result(true,"On branch "+state.head+"\n"+(stage.length?"Changes to be committed: "+stage.join(", ")+"\n":"")+(unstage.length?"Unstaged changes: "+unstage.join(", ")+"\n":"")+(stage.length||unstage.length?"":"nothing to commit, working tree clean"));
   }
@@ -129,7 +129,7 @@ function create(input){
   return {step:9,title:"Project completed",command:"git log --oneline",detail:"Your local main now includes the reviewed feature."};
  }
  function snapshot(){return copy(state)}
- return {command,edit,snapshot,suggested,changes,checkPR,initial};
+ return {command,edit,snapshot,suggested,changes,checkPR,initial,commonAncestor};
 }
 root.GitWorkspaceEngine={create,initial};
 })(typeof window!=="undefined"?window:globalThis);
